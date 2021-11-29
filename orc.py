@@ -1,6 +1,7 @@
 import numpy as np
 
 from CoolProp.CoolProp import PropsSI
+from numpy.linalg import solve
 from tespy.components import (
     Condenser,
     CycleCloser,
@@ -281,7 +282,10 @@ class CHPORC:
             if self.nw.res[-1] >= 1e-3 or self.nw.lin_dep:
                 self.nw.solve("design", init_only=True, init_path=self.stable)
             else:
-                self.solved = True
+                if any(self.nw.result['HeatExchanger']['Q'] > 0):
+                    self.solved = False
+                else:
+                    self.solved = True
         except:
             self.nw.lin_dep = True
             self.nw.solve("design", init_only=True, init_path=self.stable)
