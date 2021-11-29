@@ -1,0 +1,50 @@
+{
+    "scenario_name": "test",
+    "boundary_conditions": {
+        "Connections": {
+            "26": {
+                "T": null
+            }
+        },
+        "Components": {
+            "turbine": {
+                "eta_s": 0.85
+            }
+        }
+    },
+    "variables": {
+        "Connections": {
+            "26": {"m": {"min": 0.5, "max": 9.5}}
+        },
+        "Components": {
+            "evaporator": {
+                "ttd_l": {"min": 3, "max": 8}
+            }
+        }
+    },
+    "constraints": {
+        "lower limits": {
+            "Connections": {
+                "26": {
+                    "T": 70
+                }
+            },
+            "Components": {
+
+            }
+        },
+        "upper limits": {
+            "Connections": {
+
+            },
+            "Components": {
+                "turbine": {
+                    "pr": 1
+                }
+            }
+        }
+    },
+    "objective": "net power",
+    "num_ind": 5,
+    "num_gen": 5
+}
