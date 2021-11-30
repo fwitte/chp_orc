@@ -282,11 +282,12 @@ class CHPORC:
             if self.nw.res[-1] >= 1e-3 or self.nw.lin_dep:
                 self.nw.solve("design", init_only=True, init_path=self.stable)
             else:
-                if any(self.nw.result['HeatExchanger']['Q'] > 0):
+                if any(self.nw.results['HeatExchanger']['Q'] > 0):
                     self.solved = False
                 else:
                     self.solved = True
-        except:
+        except ValueError as e:
+            print(e)
             self.nw.lin_dep = True
             self.nw.solve("design", init_only=True, init_path=self.stable)
 
