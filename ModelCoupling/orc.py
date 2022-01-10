@@ -259,13 +259,26 @@ class CHPORC:
         orc.comps["preheater"].set_attr(offdesign=['kA_char'])
         orc.conns["3"].set_attr(x=None, Td_bp=-3, design=['Td_bp'])
 
-    def get_param(self, obj, label, parameter):
+    def get_parameters(self, **kwargs):
+
+        result = kwargs.copy()
+        if "Connections" in kwargs:
+            for c, params in kwargs["Connections"].items():
+                for param in params:
+                    result["Connections"][c][param] = self.nw.get_conn(c).get_attr(param)
+
+        if "Components" in kwargs:
+            for c, params in kwargs["Components"].items():
+                for param in params:
+                    result["Components"][c][param] = self.nw.get_comp(c).get_attr(param)
+
+    def get_single_parameter(self, obj, label, parameter):
         if obj == 'Components':
             return self.nw.get_comp(label).get_attr(parameter).val
         elif obj == 'Connections':
             return self.nw.get_conn(label).get_attr(parameter).val
 
-    def set_params(self, **kwargs):
+    def set_parameters(self, **kwargs):
 
         if "Connections" in kwargs:
             for c, params in kwargs["Connections"].items():
@@ -275,9 +288,15 @@ class CHPORC:
             for c, params in kwargs["Components"].items():
                 self.nw.get_comp(c).set_attr(**params)
 
-    def solve_model(self, **kwargs):
+    def set_single_parameter(self, obj, label, parameter, value):
+        if obj == 'Components':
+            self.nw.get_comp(label).set_attr({parameter: value})
+        elif obj == 'Connections':
+            self.nw.get_conn(label).get_attr({parameter: value})
 
-        self.set_params(**kwargs)
+    def solve_design(self, **kwargs):
+
+        self.set_parameters(**kwargs)
 
         self.solved = False
         try:
@@ -293,6 +312,32 @@ class CHPORC:
             print(e)
             self.nw.lin_dep = True
             self.nw.solve("design", init_only=True, init_path=self.stable)
+
+    def solve_offdesign(self, **kwargs):
+
+        self.set_parameters(**kwargs)
+
+        self.solved = False
+        try:
+            self.nw.solve("offdesign", design_path=self.design_path)
+            if self.nw.res[-1] >= 1e-3 or self.nw.lin_dep:
+                self.nw.solve(
+                    "offdesign", init_only=True, init_path=self.design_path,
+                    design_path=self.design_path
+                )
+            else:
+                if any(self.nw.results['HeatExchanger']['Q'] > 0):
+                    self.solved = False
+                else:
+                    self.solved = True
+        except ValueError as e:
+            print(e)
+            print("The iteration failed with the following exception: " + e)
+            self.nw.lin_dep = True
+            self.nw.solve(
+                "offdesign", init_only=True, init_path=self.design_path,
+                design_path=self.design_path
+            )
 
     def get_objective(self, label):
         if self.solved:
@@ -355,7 +400,7 @@ class CHPORC:
         c32.set_attr(T=dh_return_temperature)
 
         # brine temperature after dh heat exchanger
-        c24.set_attr(T=70, m=Ref(c22, 2 / 3, 0), design=['m'])
+        c24.set_attr(T=75, m=Ref(c22, 2 / 3, 0), design=['T'])
 
         # solve the network
         self.nw.solve("design")
