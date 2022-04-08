@@ -206,7 +206,7 @@ class CHPORC:
         # orc cycle fluid
         orc.conns["0"].set_attr(fluid={working_fluid: 1, "water": 0})
         # turbine inlet temperature
-        orc.conns["6"].set_attr(T=90)
+        orc.conns["6"].set_attr(T=90, design=["T"])
 
         # cooling water
         orc.conns["11"].set_attr(
@@ -253,9 +253,9 @@ class CHPORC:
         orc.comps["lw pump"].set_attr(eta_s=0.75, design=['eta_s'], offdesign=['eta_s_char'])
 
         c22.set_attr(T=None)
-        orc.comps["evaporator"].set_attr(ttd_l=5, design=['ttd_l'], offdesign=['kA_char'])
+        orc.comps["evaporator"].set_attr(ttd_l=10, design=['ttd_l'], offdesign=['kA_char'])
         orc.conns["0"].set_attr(p=None)
-        orc.comps["condenser"].set_attr(ttd_u=5, design=['ttd_u'], offdesign=['kA_char'])
+        orc.comps["condenser"].set_attr(ttd_u=10, design=['ttd_u'], offdesign=['kA_char'])
         orc.comps["preheater"].set_attr(offdesign=['kA_char'])
         orc.conns["3"].set_attr(x=None, Td_bp=-3, design=['Td_bp'])
 
@@ -313,13 +313,16 @@ class CHPORC:
             self.nw.lin_dep = True
             self.nw.solve("design", init_only=True, init_path=self.stable)
 
-    def solve_offdesign(self, **kwargs):
+    def solve_offdesign(self, init_path=None, **kwargs):
 
         self.set_parameters(**kwargs)
 
         self.solved = False
         try:
-            self.nw.solve("offdesign", design_path=self.design_path)
+            if init_path is None:
+                self.nw.solve("offdesign", design_path=self.design_path)
+            else:
+                self.nw.solve("offdesign", design_path=self.design_path, init_path=init_path)
             if self.nw.res[-1] >= 1e-3 or self.nw.lin_dep:
                 self.nw.solve(
                     "offdesign", init_only=True, init_path=self.design_path,
@@ -355,8 +358,8 @@ class CHPORC:
     def variant_4(self):
 
         # district heating system
-        dh_return_temperature = 60
-        dh_feed_temperature = 40
+        dh_return_temperature = 30
+        dh_feed_temperature = 15
         dh_pressure = 2
 
         # components
@@ -400,7 +403,7 @@ class CHPORC:
         c32.set_attr(T=dh_return_temperature)
 
         # brine temperature after dh heat exchanger
-        c24.set_attr(T=75, m=Ref(c22, 2 / 3, 0), design=['T'])
+        c24.set_attr(T=75, m=Ref(c22, 2 / 3, 0))
 
         # solve the network
         self.nw.solve("design")

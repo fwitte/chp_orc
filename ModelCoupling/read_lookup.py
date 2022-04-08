@@ -4,14 +4,23 @@ import pandas as pd
 from scipy import interpolate
 
 
-data = pd.read_csv("Power_QT_lookup.csv", index_col=0)
+data = pd.read_csv("ORC_Heat_lookup.csv", index_col=0)
 
-T_range = data.columns.values.astype(float)
-Q_range = data.index.values.astype(float)
+T_well_range = data.index.values.astype(float)
+T_lake_range = data.columns.values.astype(float)
 
-f = interpolate.interp2d(T_range, Q_range, data.values, kind='cubic')
+heat = interpolate.interp2d(T_lake_range, T_well_range, data.values, kind='cubic')
 
-T_array = np.random.random_integers(97, 107, 100)
-Q_array = np.random.random_integers(-10e5, -1e5, 100)
-for T, Q in zip(T_array, Q_array):
-    print(f(T, Q))
+
+data = pd.read_csv("ORC_Power_lookup.csv", index_col=0)
+
+T_well_range = data.index.values.astype(float)
+T_lake_range = data.columns.values.astype(float)
+
+power = interpolate.interp2d(T_lake_range, T_well_range, data.values, kind='cubic')
+
+T_well_array = np.random.randint(115, 135, 100)
+T_lake_array = np.random.randint(2, 21, 100)
+for T_well, T_lake in zip(T_well_array, T_lake_array):
+    print(heat(T_lake, T_well))
+    print(power(T_lake, T_well))

@@ -92,7 +92,7 @@ class PowerPlantModel:
                     self.solved = True
         except ValueError as e:
             print(e)
-            print("The iteration failed")
+            print("The iteration failed with the following exception: " + e)
             self.nw.lin_dep = True
             self.nw.solve(
                 "offdesign", init_only=True, init_path=self.path,
