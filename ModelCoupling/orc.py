@@ -13,9 +13,10 @@ from tespy.components import (
     Source,
     Splitter,
     Turbine,
+    Valve,
 )
 from tespy.components.subsystem import Subsystem
-from tespy.connections import Connection, Ref
+from tespy.connections import Connection, Ref, Bus
 from tespy.networks import Network
 
 
@@ -29,13 +30,9 @@ class ORC_without_ihe(Subsystem):
         self.comps["preheater"] = HeatExchanger("preheater")
         self.comps["evaporator"] = HeatExchanger("evaporator")
         self.comps["drum"] = Drum("drum")
+        self.comps["valve"] = Valve("valve")
         self.comps["turbine"] = Turbine("turbine")
         self.comps["orc cycle closer"] = CycleCloser("orc cycle closer")
-
-        # cooling water system
-        self.comps["lw source"] = Source("lw source")
-        self.comps["lw sink"] = Sink("lw sink")
-        self.comps["lw pump"] = Pump("lw pump")
 
     def create_conns(self):
         """Define the subsystem's connections."""
@@ -67,97 +64,14 @@ class ORC_without_ihe(Subsystem):
         self.conns["5"] = Connection(
             self.comps["evaporator"], "out2", self.comps["drum"], "in2", label="5"
         )
+        self.conns["6a"] = Connection(
+            self.comps["drum"], "out2", self.comps["valve"], "in1", label="6a"
+        )
         self.conns["6"] = Connection(
-            self.comps["drum"], "out2", self.comps["turbine"], "in1", label="6"
+            self.comps["valve"], "out1", self.comps["turbine"], "in1", label="6"
         )
         self.conns["7"] = Connection(
             self.comps["turbine"], "out1", self.comps["condenser"], "in1", label="7"
-        )
-
-        # cooling water system
-        self.conns["11"] = Connection(
-            self.comps["lw source"], "out1", self.comps["lw pump"], "in1", label="11"
-        )
-        self.conns["12"] = Connection(
-            self.comps["lw pump"], "out1", self.comps["condenser"], "in2", label="12"
-        )
-        self.conns["13"] = Connection(
-            self.comps["condenser"], "out2", self.comps["lw sink"], "in1", label="13"
-        )
-
-
-class ORC_with_ihe(Subsystem):
-    def create_comps(self):
-        """Create the subsystem's components."""
-
-        # main cycle
-        self.comps["condenser"] = Condenser("condenser")
-        self.comps["feed pump"] = Pump("feed pump")
-        self.comps["preheater"] = HeatExchanger("preheater")
-        self.comps["evaporator"] = HeatExchanger("evaporator")
-        self.comps["drum"] = Drum("drum")
-        self.comps["turbine"] = Turbine("turbine")
-        self.comps["orc cycle closer"] = CycleCloser("orc cycle closer")
-        # internal heat exchanger
-        self.comps["ihe"] = HeatExchanger("ihe")
-
-        # cooling water system
-        self.comps["lw source"] = Source("lw source")
-        self.comps["lw sink"] = Sink("lw sink")
-        self.comps["lw pump"] = Pump("lw pump")
-
-    def create_conns(self):
-        """Define the subsystem's connections."""
-
-        # main cycle
-        self.conns["0"] = Connection(
-            self.comps["condenser"],
-            "out1",
-            self.comps["orc cycle closer"],
-            "in1",
-            label="0",
-        )
-        self.conns["1"] = Connection(
-            self.comps["orc cycle closer"],
-            "out1",
-            self.comps["feed pump"],
-            "in1",
-            label="1",
-        )
-        self.conns["2_1"] = Connection(
-            self.comps["feed pump"], "out1", self.comps["ihe"], "in2", label="2_1"
-        )
-        self.conns["2_2"] = Connection(
-            self.comps["ihe"], "out1", self.comps["preheater"], "in2", label="2_2"
-        )
-        self.conns["3"] = Connection(
-            self.comps["preheater"], "out2", self.comps["drum"], "in1", label="3"
-        )
-        self.conns["4"] = Connection(
-            self.comps["drum"], "out1", self.comps["evaporator"], "in2", label="4"
-        )
-        self.conns["5"] = Connection(
-            self.comps["evaporator"], "out2", self.comps["drum"], "in2", label="5"
-        )
-        self.conns["6"] = Connection(
-            self.comps["drum"], "out2", self.comps["turbine"], "in1", label="6"
-        )
-        self.conns["7_1"] = Connection(
-            self.comps["turbine"], "out1", self.comps["ihe"], "in1", label="7_1"
-        )
-        self.conns["7_2"] = Connection(
-            self.comps["ihe"], "out1", self.comps["condenser"], "in1", label="7_2"
-        )
-
-        # cooling water system
-        self.conns["11"] = Connection(
-            self.comps["lw source"], "out1", self.comps["lw pump"], "in1", label="11"
-        )
-        self.conns["12"] = Connection(
-            self.comps["lw pump"], "out1", self.comps["condenser"], "in2", label="12"
-        )
-        self.conns["13"] = Connection(
-            self.comps["condenser"], "out2", self.comps["lw sink"], "in1", label="13"
         )
 
 
@@ -170,13 +84,13 @@ class CHPORC:
         self.nw.set_attr(p_unit="bar", T_unit="C", h_unit="kJ / kg", iterinfo=False)
 
         # geo parameters
-        geo_mass_flow = 10
-        geo_temperature = 100
+        geo_mass_flow = 50
+        geo_temperature = 130
         geo_pressure = 25
 
         # lake water parameters & exergy analysis if required
-        ambient_temperature = 15
-        ambient_pressure = 1
+        self.T0 = 15
+        self.p0 = 1
 
         orc = ORC_without_ihe("orc")
         self.nw.add_subsys(orc)
@@ -185,36 +99,42 @@ class CHPORC:
         geo_source = Source("geo source")
         geo_sink = Sink("geo re-injection")
 
+        dummy_source = Source("coolant source")
+        dummy_sink = Sink("coolant sink")
+
         # Connections
+
+        c11 = Connection(dummy_source, "out1", orc.comps["condenser"], "in2", label="11")
+        c12 = Connection(orc.comps["condenser"], "out2", dummy_sink, "in1", label="12")
 
         # ORC only for stable starting values
         c21 = Connection(geo_source, "out1", orc.comps["evaporator"], "in1", label="21")
-        c22 = Connection(
-            orc.comps["evaporator"], "out1", orc.comps["preheater"], "in1", label="22"
-        )
+        c22 = Connection(orc.comps["evaporator"], "out1", orc.comps["preheater"], "in1", label="22")
         c27 = Connection(orc.comps["preheater"], "out1", geo_sink, "in1", label="27")
 
-        self.nw.add_conns(c21, c22, c27)
+        self.nw.add_conns(c11, c12, c21, c22, c27)
 
         # component specifications
         orc.comps["condenser"].set_attr(pr1=1, pr2=0.98)
         orc.comps["evaporator"].set_attr(pr1=0.98)
         orc.comps["preheater"].set_attr(pr1=0.98, pr2=0.98)
+        orc.comps["valve"].set_attr(pr=1, design=['pr'])
 
         # connection specifications
 
         # orc cycle fluid
         orc.conns["0"].set_attr(fluid={working_fluid: 1, "water": 0})
         # turbine inlet temperature
-        orc.conns["6"].set_attr(T=90, design=["T"])
+        orc.conns["6"].set_attr(T=geo_temperature - 15, design=["T"])
 
-        # cooling water
-        orc.conns["11"].set_attr(
+        c11.set_attr(
             fluid={working_fluid: 0, "water": 1},
-            T=ambient_temperature,
-            p=ambient_pressure,
+            T=self.T0,
+            p=self.p0
         )
-        orc.conns["13"].set_attr(T=ambient_temperature + 10, p=ambient_pressure)
+
+        c12.set_attr(T=self.T0 + 10)
+
         c21.set_attr(
             fluid={working_fluid: 0, "water": 1},
             T=geo_temperature,
@@ -227,14 +147,13 @@ class CHPORC:
 
         # these specifications are for stable starting values
         orc.conns["2"].set_attr(h=Ref(orc.conns["1"], 1, 5))
-        orc.conns["12"].set_attr(h=Ref(orc.conns["11"], 1, 5))
         orc.conns["7"].set_attr(h=Ref(orc.conns["6"], 1, -100))
         # geobrine temperature between evaporator and preheater
         c22.set_attr(T=90)
         # condensing pressure
         orc.conns["0"].set_attr(
             p=PropsSI(
-                "P", "Q", 1, "T", 273.15 + ambient_temperature + 15, working_fluid
+                "P", "Q", 1, "T", 273.15 + self.T0 + 15, working_fluid
             )
             / 1e5
         )
@@ -246,11 +165,9 @@ class CHPORC:
         self.nw.save(self.stable)
 
         orc.conns["2"].set_attr(h=None)
-        orc.conns["12"].set_attr(h=None)
         orc.conns["7"].set_attr(h=None)
-        orc.comps["turbine"].set_attr(eta_s=0.9, design=['eta_s'], offdesign=['eta_s_char'])
+        orc.comps["turbine"].set_attr(eta_s=0.9, design=['eta_s'], offdesign=['eta_s_char', 'cone'])
         orc.comps["feed pump"].set_attr(eta_s=0.75, design=['eta_s'], offdesign=['eta_s_char'])
-        orc.comps["lw pump"].set_attr(eta_s=0.75, design=['eta_s'], offdesign=['eta_s_char'])
 
         c22.set_attr(T=None)
         orc.comps["evaporator"].set_attr(ttd_l=10, design=['ttd_l'], offdesign=['kA_char'])
@@ -258,6 +175,20 @@ class CHPORC:
         orc.comps["condenser"].set_attr(ttd_u=10, design=['ttd_u'], offdesign=['kA_char'])
         orc.comps["preheater"].set_attr(offdesign=['kA_char'])
         orc.conns["3"].set_attr(x=None, Td_bp=-3, design=['Td_bp'])
+
+        self.power_bus = Bus('power output')
+        self.heat_bus = Bus('heat output')
+        self.power_bus.add_comps(
+            {'comp': orc.comps["turbine"], 'char': 0.97},
+            {'comp': orc.comps["feed pump"], 'base': 'bus', 'char': 0.97}
+        )
+        self.nw.add_busses(self.power_bus, self.heat_bus)
+
+        self.nw.solve("design")
+        self.nw.print_results()
+
+    def solve_model(self, **kwargs):
+        self.solve_design(**kwargs)
 
     def get_parameters(self, **kwargs):
 
@@ -271,6 +202,9 @@ class CHPORC:
             for c, params in kwargs["Components"].items():
                 for param in params:
                     result["Components"][c][param] = self.nw.get_comp(c).get_attr(param)
+
+    def get_param(self, obj, label, parameter):
+        return self.get_single_parameter(obj, label, parameter)
 
     def get_single_parameter(self, obj, label, parameter):
         if obj == 'Components':
@@ -300,7 +234,7 @@ class CHPORC:
 
         self.solved = False
         try:
-            self.nw.solve("design")
+            self.nw.solve("design", max_iter=15)
             if self.nw.res[-1] >= 1e-3 or self.nw.lin_dep:
                 self.nw.solve("design", init_only=True, init_path=self.stable)
             else:
@@ -345,7 +279,7 @@ class CHPORC:
     def get_objective(self, label):
         if self.solved:
             if label == "net power":
-                return self.nw.get_comp('turbine').P.val + self.nw.get_comp('lw pump').P.val + self.nw.get_comp('feed pump').P.val
+                return self.power_bus.P.val
             elif label == "gross power":
                 return
             elif label == "heat":
@@ -355,11 +289,11 @@ class CHPORC:
         else:
             return np.nan
 
-    def variant_4(self):
+    def high_temperature_dh(self):
 
         # district heating system
-        dh_return_temperature = 30
-        dh_feed_temperature = 15
+        dh_return_temperature = 35
+        dh_feed_temperature = 55
         dh_pressure = 2
 
         # components
@@ -371,8 +305,26 @@ class CHPORC:
         dh_sink = Sink("dh feed")
         dh_heat_exchanger = HeatExchanger("dh heat exchanger")
 
-        self.nw.del_conns(*self.nw.get_conn(["22", "27"]))
+        # cooling water system
+        lw_source = Source("lw source")
+        lw_sink = Sink("lw sink")
+        lw_pump = Pump("lw pump")
 
+        self.nw.del_conns(*self.nw.get_conn(["11", "12", "22", "27"]))
+
+        # cooling water system
+        c11 = Connection(
+            lw_source, "out1", lw_pump, "in1", label="11"
+        )
+        c12 = Connection(
+            lw_pump, "out1", self.nw.get_comp("condenser"), "in2", label="12"
+        )
+        c13 = Connection(
+            self.nw.get_comp("condenser"), "out2", lw_sink, "in1", label="13"
+        )
+        self.nw.add_conns(c11, c12, c13)
+
+        # geo feed
         c22 = Connection(self.nw.get_comp("evaporator"), "out1", geo_splitter, "in1", label="22")
 
         # district heating
@@ -397,15 +349,126 @@ class CHPORC:
         # no pr1 required, parallel to preheater
         dh_heat_exchanger.set_attr(pr2=0.98, offdesign=['kA_char'])
         c31.set_attr(
-            fluid={self.working_fluid: 0, "water": 1}, T=dh_feed_temperature,
+            fluid={self.working_fluid: 0, "water": 1}, T=dh_return_temperature,
             p=dh_pressure
         )
-        c32.set_attr(T=dh_return_temperature)
+        c32.set_attr(T=dh_feed_temperature)
 
         # brine temperature after dh heat exchanger
-        c24.set_attr(T=75, m=Ref(c22, 2 / 3, 0))
+        c24.set_attr(T=90)
+        c26.set_attr(T=90)
+        self.nw.get_conn("6").set_attr(T=105)
+
+
+        lw_pump.set_attr(eta_s=0.75, design=['eta_s'], offdesign=['eta_s_char'])
+
+        c11.set_attr(
+            fluid={self.working_fluid: 0, "water": 1},
+            T=self.T0,
+            p=self.p0
+        )
+
+        c13.set_attr(T=self.T0 + 10, p=self.p0)
+
+
+        self.power_bus.add_comps(
+            {'comp': lw_pump, 'base': 'bus', 'char': 0.97}
+        )
+
+        self.heat_bus.add_comps(
+            {'comp': dh_heat_exchanger}
+        )
 
         # solve the network
         self.nw.solve("design")
-        self.nw.save("design_state_" + self.working_fluid)
+        self.nw.save("design_state_" + self.working_fluid + "_high_T_dh")
+        self.nw.print_results()
+
+    def low_temperature_dh(self):
+
+        # district heating system
+        dh_return_temperature = 15
+        dh_feed_temperature = 30
+        dh_pressure = 2
+
+        # pump for district heating system?
+        dh_source = Source("dh return")
+        dh_sink = Sink("dh feed")
+        dh_heat_exchanger = HeatExchanger("dh heat exchanger")
+
+        # cooling water system
+        lw_source = Source("lw source")
+        lw_sink = Sink("lw sink")
+        lw_pump = Pump("lw pump")
+
+        # self.nw.del_conns(*self.nw.get_conn(["11", "12"]))
+
+        self.nw.get_conn("11").set_attr(p=dh_pressure, T=dh_return_temperature)
+        self.nw.get_conn("12").set_attr(T=dh_feed_temperature)
+
+        # cooling water system
+        # c11 = Connection(
+        #     lw_source, "out1", lw_pump, "in1", label="11"
+        # )
+        # c12 = Connection(
+        #     lw_pump, "out1", self.nw.get_comp("condenser"), "in2", label="12"
+        # )
+        # c13 = Connection(
+        #     self.nw.get_comp("condenser"), "out2", lw_sink, "in1", label="13"
+        # )
+        # self.nw.add_conns(c11, c12, c13)
+
+        # geo feed
+        # c22 = Connection(self.nw.get_comp("evaporator"), "out1", geo_splitter, "in1", label="22")
+
+        # # district heating
+        # c23 = Connection(geo_splitter, "out1", dh_heat_exchanger, "in1", label="23")
+        # c24 = Connection(dh_heat_exchanger, "out1", geo_merge, "in1", label="24")
+
+        # # orc
+        # c25 = Connection(geo_splitter, "out2", self.nw.get_comp("preheater"), "in1", label="25")
+        # c26 = Connection(self.nw.get_comp("preheater"), "out1", geo_merge, "in2", label="26")
+
+        # c27 = Connection(
+        #     geo_merge, "out1", self.nw.get_comp("geo re-injection"), "in1", label="27"
+        # )
+        # self.nw.add_conns(c22, c23, c24, c25, c26, c27)
+
+        # # district heating
+        # c31 = Connection(dh_source, "out1", dh_heat_exchanger, "in2", label="31")
+        # c32 = Connection(dh_heat_exchanger, "out2", dh_sink, "in1", label="32")
+
+        # self.nw.add_conns(c31, c32)
+
+        # # no pr1 required, parallel to preheater
+        # dh_heat_exchanger.set_attr(pr2=0.98, offdesign=['kA_char'])
+        # c31.set_attr(
+        #     fluid={self.working_fluid: 0, "water": 1}, T=dh_return_temperature,
+        #     p=dh_pressure
+        # )
+        # c32.set_attr(T=dh_feed_temperature)
+
+        # # brine temperature after dh heat exchanger
+        # c24.set_attr(T=75)
+        # c26.set_attr(T=75)
+
+
+        # lw_pump.set_attr(eta_s=0.75, design=['eta_s'], offdesign=['eta_s_char'])
+
+        # c11.set_attr(
+        #     fluid={self.working_fluid: 0, "water": 1},
+        #     T=self.T0,
+        #     p=self.p0
+        # )
+
+        # c13.set_attr(T=self.T0 + 10, p=self.p0)
+
+
+        # self.power_bus.add_comps(
+        #     {'comp': lw_pump, 'base': 'bus', 'char': 0.97}
+        # )
+
+        # solve the network
+        self.nw.solve("design")
+        self.nw.save("design_state_" + self.working_fluid + "_low_T_dh")
         self.nw.print_results()
