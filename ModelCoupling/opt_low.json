@@ -1,0 +1,35 @@
+{
+    "scenario_name": "low temperature heat",
+    "boundary_conditions": {
+        "Connections": {
+            "21": {"T": 130},
+            "27": {"T": 90}
+        },
+        "Components": {
+        }
+    },
+    "variables": {
+        "Connections": {
+            "6": {"T": {"min": 95, "max": 125}}
+        },
+        "Components": {
+        }
+    },
+    "constraints": {
+        "lower limits": {
+            "Connections": {
+            },
+            "Components": {
+            }
+        },
+        "upper limits": {
+            "Connections": {
+            },
+            "Components": {
+            }
+        }
+    },
+    "objective": "net power",
+    "num_ind": 5,
+    "num_gen": 10
+}
