@@ -58,7 +58,6 @@ for mass_flow in [30, 40, 50]:
 
     geo_inflow = plant.nw.get_conn("21")
     geo_outflow = plant.nw.get_conn("27")
-    geo_outflow = plant.nw.get_conn("32")
 
     plant.solve_design(**{
         "Connections": {
