@@ -1,7 +1,6 @@
 import numpy as np
 
 from CoolProp.CoolProp import PropsSI
-from numpy.linalg import solve
 from tespy.components import (
     Condenser,
     CycleCloser,
@@ -185,7 +184,6 @@ class CHPORC:
         self.nw.add_busses(self.power_bus, self.heat_bus)
 
         self.nw.solve("design")
-        self.nw.print_results()
 
     def solve_model(self, **kwargs):
         self.solve_design(**kwargs)

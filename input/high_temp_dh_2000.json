@@ -1,0 +1,5 @@
+{
+    "scenario": "high_temperature_dh_2000",
+    "Q_design": -2e6,
+    "T_geo_design": 130
+}
