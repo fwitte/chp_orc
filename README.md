@@ -33,7 +33,7 @@ the researchers (Habka & Ajib, 2014) and (Van Erdeweghe et al., 2018).
 *combined heat-and-power plant for a low-temperature geothermal source. Energy,*
 *150, 396–409. https://doi.org/10.1016/j.energy.2018.01.136*
 
-The reinjection of the geothermal fluid is constraint to a minimum temperature
+The reinjection of the geothermal fluid is constrained to a minimum temperature
 value of 90 °C (for the case studies conducted here). Its value can be modified
 in the input file.
 
@@ -41,10 +41,10 @@ In the design, the Temperature values at 24 and 26 are set to this temperature
 value. The evaporation temperature/pressure inside the orc power cycle is then
 calculated based on the heat demand specification in the input file. The
 relationship between design heat demand and evaporation pressure as well as
-power generation is show in the figure below. The lake pump is controlled in a
+power generation is shown in the figure below. The lake pump is controlled in a
 way, that temperature increase in the condenser is 10 °C at all times. That
 means that the lake water mass flow changes with the power production of the
-ORC power cycle. The design parameters of the cycle a are listed in the table
+ORC power cycle. The design parameters of the cycle are listed in the table
 below the figure. The remaining design parameters are controlled with the input
 file (see Usage section).
 
