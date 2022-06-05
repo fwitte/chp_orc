@@ -13,32 +13,78 @@ assuming constant geothermal production for three months.
 The simulation model calculates the power output of the geothermal ORC
 following a heat demand curve. For that, the maximum monthly heat demand is
 mapped to the design heat production of the plant and the heat production for
-the other months is scaled respectively.
+the other months is scaled respectively. The waste heat from the ORC is
+discharged into the lake.
 
-Two different variants - a high temperature district heating system and a low
-temperature district heating system - are available. The waste heat from the
-ORC is discharged into the lake in the high temperature district heating system.
-In the low temperature variant only surplus heat, that cannot be taken by the
-district heating system is discharged into the lake.
+## Plant layout
 
-## Plant layouts
-
-For the high temperature district heating system the ORC provides heat at 55 °C
-assuming a return temperature of 35 °C. The ORC plant has the following
-topology as suggested in LINKTOORIGINALSTUDIES.
+The ORC plant has the following topology - "hybrid parallel" - as suggested by
+the researchers (Habka & Ajib, 2014) and (Van Erdeweghe et al., 2018).
 
 <figure>
-<img src="./flowsheet_dh_high_T.svg" class="align-center" />
+<img src="./flowsheet.svg" class="align-center" />
 </figure>
 
-In the low temperature district heating system heat is provided at 30 °C, which
-is then increased locally using decentral heat pumps. The ORC uses the district
-heating system as heat sink. The lake water can be used for cooling
-simultanously, in case the district heating system cannot take the heat demand.
+*Habka, M., & Ajib, S. (2014). Investigation of novel, hybrid,*
+*geothermal-energized cogeneration plants based on organic Rankine cycle.*
+*Energy, 70, 212–222. https://doi.org/10.1016/j.energy.2014.03.114*
+
+*Van Erdeweghe, S., Van Bael, J., Laenen, B., & D’haeseleer, W. (2018). Optimal*
+*combined heat-and-power plant for a low-temperature geothermal source. Energy,*
+*150, 396–409. https://doi.org/10.1016/j.energy.2018.01.136*
+
+The reinjection of the geothermal fluid is constraint to a minimum temperature
+value of 90 °C (for the case studies conducted here). Its value can be modified
+in the input file.
+
+In the design, the Temperature values at 24 and 26 are set to this temperature
+value. The evaporation temperature/pressure inside the orc power cycle is then
+calculated based on the heat demand specification in the input file. The
+relationship between design heat demand and evaporation pressure as well as
+power generation is show in the figure below. The lake pump is controlled in a
+way, that temperature increase in the condenser is 10 °C at all times. That
+means that the lake water mass flow changes with the power production of the
+ORC power cycle. The design parameters of the cycle a are listed in the table
+below the figure. The remaining design parameters are controlled with the input
+file (see Usage section).
 
 <figure>
-<img src="./flowsheet_dh_low_T.svg" class="align-center" />
+<img src="./heat_power_pressure_correlation.svg" class="align-center" />
 </figure>
+
+|                 | Parameter                | Value  | Unit |
+|-----------------|--------------------------|--------|------|
+| turbine         | efficiencies (is, el)    | 90, 97 | %    |
+| pumps           | efficiencies (is, el)    | 75, 97 | %    |
+| condenser       | temperature difference   |     10 | °C   |
+|                 | pressure ratio hot side  |      1 | -    |
+| evaporator      | pinch point              |     10 | °C   |
+|                 | pressure ratio cold side |      1 | -    |
+| preheater       | temperature difference   |      3 | °C   |
+| heat exchangers | pressure ratios          |   0.98 | -    |
+| lake water      | temperature increase     |     10 | °C   |
+
+Partload operation is simulated by applying characteristic curves for the
+efficiency of heat transfer and turbines as well as pumps. The temperatures 24
+and 26 are fixed to the minimum reinjection temperature. However, in case the
+ORC power cycle is overloaded, the temperature value 26 increases to values
+higher than the minimum reinjection temperature. This occurs, when the working
+fluid mass flow increases with lower heat demand. The turbine then requires
+higher pressure at the inlet to deal with the increased mass flow and therefore
+the pressure ratio over the valve becomes larger than 1, which is physically
+impossible. In this case the pressure ratio is set to 1 instead of setting the
+temperature 26 (valve is fully opened).
+
+**Please note, that the district heating system temperature does not influence**
+**the other components of the plant in this control strategy.** By keeping
+temperature 24 value constant at the reinjection temperature, the feed
+temperature of the district heating system cannot be controlled within the
+district heating heat exchanger anymore. However, partially bypassing the heat
+exchanger and mixing the cold return flow with the too hot feed flow from the
+heat exchanger, the temperature value can be brought down to the appropriate
+level without changing the overall heat input. The district heating water
+circulation is therefore increased. Since this does not affect the operation of
+the ORC system, it is not part of the simulation.
 
 ## Usage
 
@@ -49,24 +95,18 @@ requirements to it.
 pip install -r ./requirements.txt
 ```
 
-To run the simulation for the high temperature system run
+To run the simulation type
 
 ``` bash
-python run_ht_dh.py input/inputfile.json
+python run.py input/inputfile.json
 ```
 
-and run
-
-``` bash
-python run_lt_dh.py input/inputfile.json
-```
-
-for the low temperature system.
+in your console.
 
 Please exchange the "inputfile.json" with the respective scenario you want to
-simulate, e.g. "high_temp_dh_1500.json". Currently, it is possibel to specify
-the design geothermal temperature as well as the design heat production of the
-plant.
+simulate, e.g. "high_temp_dh_1500.json". It is possible to specify the working
+fluid of the ORC, some design parameters like heat production and geothermal
+source temperature as well as the reinjection temperature constraint.
 
 **The tool is quite flexibile in parameter settings, if you want to learn more**
 **on how to change parameters, please contact us.**

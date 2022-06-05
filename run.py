@@ -36,7 +36,7 @@ T_lake_design = demand_data["T_lake"].mean()
 Q_design = input_data["Q_design"]
 
 # set to desired design state
-for mass_flow in [30, 40, 50]:
+for mass_flow in well_data.columns:
 
     scn_name = input_data["scenario"] + "_" + str(int(mass_flow))
 
@@ -49,9 +49,9 @@ for mass_flow in [30, 40, 50]:
     )
 
     # set up new plant
-    plant = CHPORC("Isopentane")
+    plant = CHPORC(input_data["working_fluid"])
     # create variant 4 export
-    plant.high_temperature_dh()
+    plant.insert_dh_and_cw()
 
     lake_intake = plant.nw.get_conn("11")
     lake_outflow = plant.nw.get_conn("13")
@@ -65,8 +65,10 @@ for mass_flow in [30, 40, 50]:
             "11": {"T": T_lake_design},
             "13": {"T": T_lake_design + 10},
             "21": {"T": T_prod_design, "m": mass_flow},
-            "24": {"T": 90},
-            "26": {"T": 90},
+            "24": {"T": input_data["T_reinjection"]},
+            "26": {"T": input_data["T_reinjection"]},
+            "31": {"T": input_data["T_dh_return"]},
+            "32": {"T": input_data["T_dh_feed"]},
         },
         "Components": {
             "dh heat exchanger": {"Q": Q_design},
@@ -82,7 +84,7 @@ for mass_flow in [30, 40, 50]:
     # test solve offdesign state
     plant.solve_offdesign(**{
         "Connections": {
-            "26": {"m": None, "T": 90},
+            "26": {"m": None, "T": input_data["T_reinjection"]},
             "32": {"T": None},
         },
         "Components": {
@@ -100,7 +102,7 @@ for mass_flow in [30, 40, 50]:
                 "Connections": {
                     "11": {"T": T_lake},
                     "21": {"T": T_geo},
-                    "26": {"T": 90},
+                    "26": {"T": input_data["T_reinjection"]},
                     "13": {"T": T_lake + 10}
                 },
                 "Components": {
