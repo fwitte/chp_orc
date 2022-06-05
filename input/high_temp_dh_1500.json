@@ -1,5 +1,9 @@
 {
     "scenario": "high_temperature_dh_1500",
     "Q_design": -1.5e6,
-    "T_geo_design": 130
+    "T_geo_design": 130,
+    "T_dh_feed": 55,
+    "T_dh_return": 35,
+    "working_fluid": "Isopentane",
+    "T_reinjection": 90
 }
