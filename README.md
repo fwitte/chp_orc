@@ -60,7 +60,7 @@ file (see Usage section).
 |                 | pressure ratio hot side  |      1 | -    |
 | evaporator      | pinch point              |     10 | °C   |
 |                 | pressure ratio cold side |      1 | -    |
-| preheater       | temperature difference   |      3 | °C   |
+| preheater       | approach point           |      3 | °C   |
 | heat exchangers | pressure ratios          |   0.98 | -    |
 | lake water      | temperature increase     |     10 | °C   |
 
