@@ -111,12 +111,6 @@ source temperature as well as the reinjection temperature constraint.
 **The tool is quite flexibile in parameter settings, if you want to learn more**
 **on how to change parameters, please contact us.**
 
-## Citation
-
-The state of this repository is archived via zenodo. If you are using the
-TESPy model within your own research, you can refer to this model via the
-zenodo doi: [10.5281/zenodo.6592257][].
-
 ## MIT License
 
 Copyright (c) 2022 Francesco Witte, Nicholas Fry
@@ -141,4 +135,3 @@ SOFTWARE.
 
 
   [TESPy]: https://github.com/oemof/tespy
-  [10.5281/zenodo.6592257]: https://zenodo.org/record/6592257
