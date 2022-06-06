@@ -53,7 +53,7 @@
      inkscape:window-maximized="1"
      inkscape:window-y="-8"
      inkscape:window-x="-8"
-     inkscape:window-height="1137"
+     inkscape:window-height="1017"
      inkscape:window-width="1920"
      inkscape:snap-to-guides="false"
      inkscape:guide-bbox="true"
@@ -68,9 +68,9 @@
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="491.36951"
-     inkscape:cx="487.76051"
-     inkscape:zoom="0.66932628"
+     inkscape:cy="194.40333"
+     inkscape:cx="460.68946"
+     inkscape:zoom="1.8931406"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -102,7 +102,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -436,14 +436,14 @@
     <text
        id="text1025-3-9-6"
        y="56.838821"
-       x="144.28056"
+       x="143.62703"
        style="font-size:4.9389px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round"
        xml:space="preserve"><tspan
          style="stroke-width:0.264583;stroke-linecap:round;stroke-linejoin:round"
          y="56.838821"
-         x="144.28056"
+         x="143.62703"
          id="tspan1023-6-9-0"
-         sodipodi:role="line">Extraction well</tspan></text>
+         sodipodi:role="line">Production well</tspan></text>
     <text
        id="text1025-3-9-6-2"
        y="56.838821"
