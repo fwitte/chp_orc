@@ -297,6 +297,7 @@ class CHPORC:
         # components
         geo_splitter = Splitter("geo splitter")
         geo_merge = Merge("geo merge")
+        geo_reinjection = self.nw.get_comp("geo re-injection")
 
         # pump for district heating system?
         dh_source = Source("dh return")
@@ -334,7 +335,7 @@ class CHPORC:
         c26 = Connection(self.nw.get_comp("preheater"), "out1", geo_merge, "in2", label="26")
 
         c27 = Connection(
-            geo_merge, "out1", self.nw.get_comp("geo re-injection"), "in1", label="27"
+            geo_merge, "out1", geo_reinjection, "in1", label="27"
         )
         self.nw.add_conns(c22, c23, c24, c25, c26, c27)
 
